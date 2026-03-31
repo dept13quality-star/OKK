@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABIS ОКК — Транскрибация и оценка</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --primary: #2D1B69;
+    --accent: #6B3FA0;
+    --light: #F8F5FF;
+    --white: #ffffff;
+    --text: #1a1a2e;
+    --muted: #888;
+    --success: #22c55e;
+    --error: #ef4444;
+    --border: #e0d9f5;
+    --warn: #f59e0b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Manrope', sans-serif;
+    background: var(--light);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: var(--primary);
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .logo { font-size: 20px; font-weight: 800; color: white; letter-spacing: -0.5px; }
+  .logo span { color: #c4b0ff; }
+  .badge {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  main {
+    flex: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 48px 24px;
+  }
+
+  h1 { font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+  .subtitle { color: var(--muted); font-size: 15px; margin-bottom: 40px; }
+
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 2px 20px rgba(45,27,105,0.08);
+    margin-bottom: 24px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  label { font-size: 13px; font-weight: 600; color: var(--text); }
+  input[type="text"], input[type="password"], textarea {
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  input:focus, textarea:focus { border-color: var(--accent); }
+
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--light);
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: #f0ebff; }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { font-size: 40px; margin-bottom: 12px; }
+  .upload-text { font-size: 15px; font-weight: 600; color: var(--primary); margin-bottom: 4px; }
+  .upload-hint { font-size: 13px; color: var(--muted); }
+
+  .file-selected {
+    margin-top: 16px;
+    background: var(--light);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary);
+  }
+
+  .btn {
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .btn:hover:not(:disabled) {
+    background: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(45,27,105,0.3);
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn.accent { background: var(--accent); }
+  .btn.accent:hover:not(:disabled) { background: var(--primary); }
+
+  .progress-wrap { margin-top: 20px; display: none; }
+  .progress-label {
+    font-size: 13px; font-weight: 600; color: var(--accent);
+    margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+  }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .progress-bar-bg { background: var(--border); border-radius: 8px; height: 6px; overflow: hidden; }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    border-radius: 8px;
+    transition: width 0.3s;
+  }
+
+  .result-card {
+    display: none;
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 2px 20px rgba(45,27,105,0.08);
+    margin-bottom: 24px;
+    border-left: 4px solid var(--success);
+  }
+  .result-header {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 20px;
+  }
+  .result-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--success); }
+  .copy-btn {
+    background: var(--light); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 16px; font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--primary); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+  }
+  .copy-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+  .transcript-text {
+    font-size: 14px; line-height: 1.8; color: var(--text); white-space: pre-wrap;
+    max-height: 400px; overflow-y: auto; padding: 16px;
+    background: var(--light); border-radius: 10px;
+    scrollbar-width: thin; scrollbar-color: var(--accent) var(--border);
+  }
+  .stats { display: flex; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+  .stat { background: var(--light); border-radius: 8px; padding: 10px 16px; font-size: 12px; color: var(--muted); font-weight: 600; }
+  .stat span { color: var(--primary); font-size: 15px; font-weight: 800; display: block; }
+
+  .error-card {
+    display: none; background: #fff5f5; border-radius: 12px; padding: 16px 20px;
+    border-left: 4px solid var(--error); font-size: 14px; color: var(--error);
+    font-weight: 500; margin-top: 16px;
+  }
+
+  /* Checklist evaluation styles */
+  .eval-card {
+    display: none;
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 2px 20px rgba(45,27,105,0.08);
+    margin-bottom: 24px;
+    border-left: 4px solid var(--accent);
+  }
+
+  .score-gauge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    margin: 24px 0;
+  }
+  .score-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-size: 36px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    transition: all 0.5s;
+  }
+  .score-circle .score-label { font-size: 12px; font-weight: 600; opacity: 0.85; }
+
+  .checklist-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  .checklist-table th {
+    background: var(--primary); color: white;
+    padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .checklist-table th:first-child { border-radius: 8px 0 0 0; }
+  .checklist-table th:last-child { border-radius: 0 8px 0 0; }
+  .checklist-table td {
+    padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .checklist-table tr:last-child td { border-bottom: none; }
+  .checklist-table tr:nth-child(even) td { background: var(--light); }
+
+  .tag {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+  }
+  .tag-yes { background: #dcfce7; color: #16a34a; }
+  .tag-no { background: #fee2e2; color: #dc2626; }
+  .tag-partial { background: #fef9c3; color: #ca8a04; }
+
+  .analysis-section { margin-top: 28px; }
+  .analysis-section h3 {
+    font-size: 14px; font-weight: 700; color: var(--primary);
+    margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--border);
+  }
+  .analysis-item {
+    background: var(--light); border-radius: 10px; padding: 14px 16px;
+    margin-bottom: 10px; font-size: 14px; line-height: 1.6; color: var(--text);
+  }
+  .analysis-item strong { color: var(--accent); }
+
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .save-btn {
+    background: var(--accent); color: white; border: none; border-radius: 10px;
+    padding: 10px 20px; font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+  }
+  .save-btn:hover { background: var(--primary); }
+
+  .divider {
+    display: flex; align-items: center; gap: 16px; margin: 8px 0 24px;
+    color: var(--muted); font-size: 12px; font-weight: 600;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  footer { text-align: center; padding: 20px; font-size: 12px; color: var(--muted); }
+
+  .eval-progress-wrap { margin-top: 20px; display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ABIS <span>ОКК</span></div>
+  <div class="badge">Транскрибация + Оценка</div>
+</header>
+
+<main>
+  <h1>Транскрибация и оценка записей</h1>
+  <p class="subtitle">Загрузите аудиофайл — получите текст и автоматическую оценку по чек-листу SVET.KZ</p>
+
+  <!-- Settings -->
+  <div class="card">
+    <div class="card-title">⚙️ Настройки</div>
+    <div class="input-group">
+      <label>API ключ ElevenLabs</label>
+      <input type="password" id="apiKey" placeholder="sk_..." value="sk_248399573da40639f816e43785144f276282bdbf1fa1f129" />
+    </div>
+    <div class="input-group">
+      <label>API ключ Gemini (для оценки по чек-листу)</label>
+      <input type="password" id="geminiKey" placeholder="AIzaSy..." />
+    </div>
+    <div class="input-group">
+      <label>ФИО менеджера (необязательно)</label>
+      <input type="text" id="managerName" placeholder="Например: Бекзат Сейткали" />
+    </div>
+  </div>
+
+  <!-- Upload -->
+  <div class="card">
+    <div class="card-title">🎙️ Аудиофайл</div>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept=".mp3,.wav,.flac,.m4a,.ogg,.aac" />
+      <div class="upload-icon">📂</div>
+      <div class="upload-text">Нажмите или перетащите файл</div>
+      <div class="upload-hint">MP3, WAV, FLAC, M4A, OGG, AAC</div>
+    </div>
+    <div class="file-selected" id="fileSelected" style="display:none">
+      <span>🎵</span>
+      <span id="fileName"></span>
+      <span id="fileSize" style="color:var(--muted); font-size:12px; margin-left:auto"></span>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-label">
+        <div class="spinner"></div>
+        <span id="progressLabel">Отправляю на ElevenLabs...</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar" style="width:30%"></div>
+      </div>
+    </div>
+
+    <div class="error-card" id="errorCard"></div>
+
+    <button class="btn" id="transcribeBtn" disabled onclick="transcribe()">
+      ✨ Транскрибировать
+    </button>
+  </div>
+
+  <!-- Transcript Result -->
+  <div class="result-card" id="resultCard">
+    <div class="result-header">
+      <div class="result-title">✅ Транскрипт готов</div>
+      <div class="actions">
+        <button class="copy-btn" onclick="copyText()">📋 Копировать</button>
+        <button class="save-btn" onclick="saveText()">💾 Сохранить .txt</button>
+      </div>
+    </div>
+    <div class="transcript-text" id="transcriptText"></div>
+    <div class="stats">
+      <div class="stat"><span id="charCount">0</span>символов</div>
+      <div class="stat"><span id="wordCount">0</span>слов</div>
+      <div class="stat"><span id="timeElapsed">0с</span>время обработки</div>
+    </div>
+
+    <div class="divider" style="margin-top:28px">оценка по чек-листу</div>
+
+    <button class="btn accent" id="evaluateBtn" onclick="evaluateChecklist()">
+      📋 Оценить по чек-листу SVET.KZ
+    </button>
+
+    <div class="eval-progress-wrap" id="evalProgressWrap">
+      <div class="progress-label">
+        <div class="spinner"></div>
+        <span id="evalProgressLabel">Анализирую разговор по чек-листу...</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="evalProgressBar" style="width:40%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Evaluation Result -->
+  <div class="eval-card" id="evalCard">
+    <div class="result-header">
+      <div class="result-title" style="color:var(--accent)">📊 Оценка по чек-листу</div>
+      <div class="actions">
+        <button class="save-btn" onclick="saveEval()">💾 Сохранить оценку</button>
+      </div>
+    </div>
+
+    <div class="score-gauge">
+      <div class="score-circle" id="scoreCircle">
+        <span id="scoreValue">0</span>
+        <span class="score-label">из 100</span>
+      </div>
+      <div style="font-size:13px; color:var(--muted); font-weight:600" id="scoreVerdict"></div>
+    </div>
+
+    <table class="checklist-table" id="checklistTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Критерий</th>
+          <th>Балл</th>
+          <th>Факт</th>
+          <th>Комментарий</th>
+        </tr>
+      </thead>
+      <tbody id="checklistBody"></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2" style="font-weight:800; color:var(--primary); padding:12px 14px;">ИТОГО</td>
+          <td style="font-weight:800; color:var(--primary);">100</td>
+          <td style="font-weight:800; color:var(--primary);" id="totalScore">0</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="analysis-section" id="analysisSection"></div>
+  </div>
+</main>
+
+<footer>ABIS GROUP · Отдел контроля качества · SVET.KZ</footer>
+
+<script>
+  let selectedFile = null;
+  let startTime = null;
+  let currentTranscript = '';
+  let currentFileName = '';
+  let currentEvalData = null;
+
+  const fileInput = document.getElementById('fileInput');
+  const uploadZone = document.getElementById('uploadZone');
+  const fileSelected = document.getElementById('fileSelected');
+  const fileName = document.getElementById('fileName');
+  const fileSize = document.getElementById('fileSize');
+  const transcribeBtn = document.getElementById('transcribeBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressLabel = document.getElementById('progressLabel');
+  const progressBar = document.getElementById('progressBar');
+  const resultCard = document.getElementById('resultCard');
+  const transcriptText = document.getElementById('transcriptText');
+  const errorCard = document.getElementById('errorCard');
+
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) selectFile(e.target.files[0]);
+  });
+  uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault(); uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) selectFile(e.dataTransfer.files[0]);
+  });
+
+  function selectFile(file) {
+    selectedFile = file;
+    currentFileName = file.name.replace(/\.[^/.]+$/, '');
+    fileName.textContent = file.name;
+    fileSize.textContent = (file.size / 1024 / 1024).toFixed(1) + ' МБ';
+    fileSelected.style.display = 'flex';
+    transcribeBtn.disabled = false;
+    resultCard.style.display = 'none';
+    document.getElementById('evalCard').style.display = 'none';
+    errorCard.style.display = 'none';
+  }
+
+  async function transcribe() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    if (!apiKey) { showError('Введите API ключ ElevenLabs'); return; }
+    if (!selectedFile) { showError('Выберите аудиофайл'); return; }
+
+    transcribeBtn.disabled = true;
+    progressWrap.style.display = 'block';
+    resultCard.style.display = 'none';
+    document.getElementById('evalCard').style.display = 'none';
+    errorCard.style.display = 'none';
+    startTime = Date.now();
+
+    progressLabel.textContent = 'Отправляю на ElevenLabs...';
+    progressBar.style.width = '20%';
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('model_id', 'scribe_v1');
+    formData.append('diarize', 'true');
+
+    setTimeout(() => { progressLabel.textContent = 'Файл загружен, ожидаю транскрипт...'; progressBar.style.width = '50%'; }, 2000);
+    setTimeout(() => { progressLabel.textContent = 'Обрабатываю речь...'; progressBar.style.width = '75%'; }, 5000);
+
+    try {
+      const data = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://api.elevenlabs.io/v1/speech-to-text');
+        xhr.setRequestHeader('xi-api-key', apiKey);
+        xhr.onload = () => {
+          try { resolve(JSON.parse(xhr.responseText)); }
+          catch(e) { reject(new Error('Ошибка парсинга ответа')); }
+        };
+        xhr.onerror = () => reject(new Error('Сетевая ошибка'));
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 40) + 20;
+            progressBar.style.width = pct + '%';
+          }
+        };
+        xhr.send(formData);
+      });
+      progressBar.style.width = '100%';
+      if (data.text) {
+        currentTranscript = data.text;
+        showResult(data.text);
+      } else {
+        showError('Ошибка: ' + JSON.stringify(data));
+      }
+    } catch (err) {
+      showError('Ошибка соединения: ' + err.message);
+    }
+
+    progressWrap.style.display = 'none';
+    transcribeBtn.disabled = false;
+  }
+
+  function showResult(text) {
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    transcriptText.textContent = text;
+    document.getElementById('charCount').textContent = text.length;
+    document.getElementById('wordCount').textContent = text.split(/\s+/).filter(w => w).length;
+    document.getElementById('timeElapsed').textContent = elapsed + 'с';
+    resultCard.style.display = 'block';
+    resultCard.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function showError(msg) {
+    errorCard.textContent = '⚠️ ' + msg;
+    errorCard.style.display = 'block';
+    progressWrap.style.display = 'none';
+    transcribeBtn.disabled = false;
+  }
+
+  function copyText() {
+    navigator.clipboard.writeText(currentTranscript).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = '✅ Скопировано!';
+      setTimeout(() => btn.textContent = '📋 Копировать', 2000);
+    });
+  }
+
+  function saveText() {
+    const blob = new Blob([currentTranscript], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = currentFileName + '_транскрипт.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ─── CHECKLIST EVALUATION ───────────────────────────────────────────────
+
+  const CHECKLIST = [
+    { id: 1,  text: 'Менеджер поприветствовал Клиента', score: 4 },
+    { id: 2,  text: 'Менеджер представился', score: 2 },
+    { id: 3,  text: 'Менеджер выясняет, куда подбирает свет', score: 8 },
+    { id: 4,  text: 'Менеджер сказал, что представлено не всё', score: 1 },
+    { id: 5,  text: 'Менеджер провел экскурсию по салону Клиенту', score: 3 },
+    { id: 6,  text: 'Менеджер выявляет потребности — стиль', score: 5 },
+    { id: 7,  text: 'Менеджер предложил Клиенту присесть', score: 5 },
+    { id: 8,  text: 'Менеджер предложил Клиенту чай или кофе', score: 3 },
+    { id: 9,  text: 'Если проходят акции, менеджер сказал Клиенту', score: 2 },
+    { id: 10, text: 'Менеджер выявляет потребности — квадратура', score: 4 },
+    { id: 11, text: 'Менеджер выявляет потребности — высота', score: 4 },
+    { id: 12, text: 'Менеджер выявляет потребности — точки и доп. освещение', score: 3 },
+    { id: 13, text: 'Менеджер выявляет потребности — яркий или приглушенный свет', score: 2 },
+    { id: 14, text: 'Менеджер выявляет потребности — для других комнат', score: 4 },
+    { id: 15, text: 'Менеджер презентует товар', score: 7 },
+    { id: 16, text: 'Менеджер сделал подборку/КП', score: 5 },
+    { id: 17, text: 'Менеджер рассказал про другие виды товара (краски)', score: 1 },
+    { id: 18, text: 'Менеджер узнал, откуда о нас узнал Клиент', score: 1 },
+    { id: 19, text: 'Менеджер отработал возражения', score: 10 },
+    { id: 20, text: 'Менеджер взял номер телефона у Клиента', score: 4 },
+    { id: 21, text: 'Менеджер совершил сделку', score: 20 },
+    { id: 22, text: 'Менеджер попрощался с Клиентом', score: 2 },
+  ];
+
+  async function evaluateChecklist() {
+    if (!currentTranscript) { alert('Сначала транскрибируйте запись'); return; }
+
+    const evalBtn = document.getElementById('evaluateBtn');
+    const evalProgressWrap = document.getElementById('evalProgressWrap');
+    const evalProgressBar = document.getElementById('evalProgressBar');
+    const evalProgressLabel = document.getElementById('evalProgressLabel');
+    const evalCard = document.getElementById('evalCard');
+
+    evalBtn.disabled = true;
+    evalProgressWrap.style.display = 'block';
+    evalCard.style.display = 'none';
+    evalProgressBar.style.width = '20%';
+    evalProgressLabel.textContent = 'Анализирую запись...';
+
+    setTimeout(() => { evalProgressBar.style.width = '55%'; evalProgressLabel.textContent = 'Определяю диалоги с клиентами...'; }, 1500);
+    setTimeout(() => { evalProgressBar.style.width = '80%'; evalProgressLabel.textContent = 'Формирую отчёт...'; }, 3500);
+
+    const managerName = document.getElementById('managerName').value || 'Менеджер';
+    const checklistText = CHECKLIST.map(item => `${item.id}. ${item.text} (макс. ${item.score} балл.)`).join('\n');
+    const transcriptForEval = currentTranscript.length > 4000 
+      ? currentTranscript.substring(0, 4000) + '\n...[запись обрезана для анализа]'
+      : currentTranscript;
+
+    const GEMINI_KEY = document.getElementById('geminiKey').value.trim();
+    if (!GEMINI_KEY) { alert('Введите API ключ Gemini'); evalBtn.disabled = false; evalProgressWrap.style.display = 'none'; return; }
+
+    async function callGemini(promptText, label) {
+      evalProgressLabel.textContent = label;
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          generationConfig: { maxOutputTokens: 8192, temperature: 0.1 }
+        })
+      });
+      const d = await resp.json();
+      const raw = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (!raw) throw new Error('Пустой ответ Gemini: ' + JSON.stringify(d).substring(0, 200));
+      const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('Нет JSON в ответе: ' + cleaned.substring(0, 200));
+      return JSON.parse(match[0]);
+    }
+
+    // ЗАПРОС 1 — чек-лист
+    const prompt1 = `Ты специалист ОКК SVET.KZ. Оцени запись по чек-листу.
+ФИО менеджера: ${managerName}
+ЧЕКЛИСТ: ${checklistText}
+ТРАНСКРИПТ: ${transcriptForEval}
+
+Определи: есть ли клиенты, сколько диалогов. Напиши краткое summary (2 предложения).
+Для каждого диалога оцени все 22 пункта: "да"(полный балл), "нет"(0), "частично"(пол балла округли вниз), "н/а"(полный балл).
+
+Отвечай ТОЛЬКО JSON без markdown:
+{"summary":"...","has_clients":true,"clients_count":1,"dialogs":[{"client_num":1,"client_description":"...","items":[{"id":1,"result":"да","score_given":4,"comment":"коротко"},{"id":2,"result":"нет","score_given":0,"comment":"коротко"},{"id":3,"result":"да","score_given":8,"comment":"коротко"},{"id":4,"result":"н/а","score_given":1,"comment":"коротко"},{"id":5,"result":"да","score_given":3,"comment":"коротко"},{"id":6,"result":"да","score_given":5,"comment":"коротко"},{"id":7,"result":"нет","score_given":0,"comment":"коротко"},{"id":8,"result":"нет","score_given":0,"comment":"коротко"},{"id":9,"result":"н/а","score_given":2,"comment":"коротко"},{"id":10,"result":"да","score_given":4,"comment":"коротко"},{"id":11,"result":"да","score_given":4,"comment":"коротко"},{"id":12,"result":"да","score_given":3,"comment":"коротко"},{"id":13,"result":"да","score_given":2,"comment":"коротко"},{"id":14,"result":"нет","score_given":0,"comment":"коротко"},{"id":15,"result":"да","score_given":7,"comment":"коротко"},{"id":16,"result":"да","score_given":5,"comment":"коротко"},{"id":17,"result":"нет","score_given":0,"comment":"коротко"},{"id":18,"result":"нет","score_given":0,"comment":"коротко"},{"id":19,"result":"н/а","score_given":10,"comment":"коротко"},{"id":20,"result":"да","score_given":4,"comment":"коротко"},{"id":21,"result":"да","score_given":20,"comment":"коротко"},{"id":22,"result":"да","score_given":2,"comment":"коротко"}],"total":85}]}`;
+
+    // ЗАПРОС 2 — анализ
+    const prompt2 = `Ты специалист ОКК SVET.KZ. На основе транскрипта дай развёрнутый анализ работы менеджера ${managerName}.
+ТРАНСКРИПТ: ${transcriptForEval}
+
+Отвечай ТОЛЬКО JSON без markdown:
+{"analysis":{"missed":"что пропустил менеджер","wrong_order":"что перепутал местами","mistakes":"основные ошибки","successes":"успешные действия","speech":"оценка речи и грамотности","managed_conversation":"управлял ли разговором","recommendations":"рекомендации ОКК"}}`;
+
+    try {
+      evalProgressBar.style.width = '30%';
+      const data1 = await callGemini(prompt1, 'Оцениваю чек-лист...');
+      evalProgressBar.style.width = '60%';
+      const data2 = await callGemini(prompt2, 'Анализирую работу менеджера...');
+      evalProgressBar.style.width = '100%';
+
+      // Объединяем результаты
+      if (data1.dialogs && data1.dialogs.length > 0) {
+        data1.dialogs[0].analysis = data2.analysis;
+      }
+      const evalData = data1;
+      currentEvalData = evalData;
+      renderEvaluation(evalData, managerName);
+
+    } catch (err) {
+      alert('Ошибка оценки: ' + err.message);
+    }
+
+    evalProgressWrap.style.display = 'none';
+    evalBtn.disabled = false;
+  }
+
+  function renderEvaluation(data, managerName) {
+    const evalCard = document.getElementById('evalCard');
+
+    // Summary box
+    const summaryHtml = `
+      <div style="background:var(--light); border-radius:12px; padding:18px 20px; margin-bottom:24px; border-left:4px solid var(--accent);">
+        <div style="font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">📝 Краткое содержание записи</div>
+        <div style="font-size:14px; line-height:1.7; color:var(--text)">${data.summary || '—'}</div>
+      </div>`;
+
+    // No clients case
+    if (!data.has_clients || !data.dialogs || data.dialogs.length === 0) {
+      document.getElementById('scoreCircle').style.display = 'none';
+      document.getElementById('scoreVerdict').textContent = 'Клиентов в записи не обнаружено';
+      document.getElementById('checklistTable').style.display = 'none';
+      document.getElementById('analysisSection').innerHTML = summaryHtml;
+      evalCard.style.display = 'block';
+      evalCard.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    // Hide default single score circle — we render per-dialog
+    document.getElementById('scoreCircle').style.display = 'none';
+    document.getElementById('scoreVerdict').style.display = 'none';
+    document.getElementById('checklistTable').style.display = 'none';
+
+    let html = summaryHtml;
+
+    if (data.dialogs.length > 1) {
+      html += `<div style="font-size:13px; font-weight:700; color:var(--primary); margin-bottom:16px;">📊 Найдено диалогов с клиентами: ${data.dialogs.length}</div>`;
+    }
+
+    data.dialogs.forEach((dialog, idx) => {
+      const total = dialog.total || 0;
+      let color, verdict;
+      if (total >= 85) { color = '#22c55e'; verdict = '🏆 Отлично'; }
+      else if (total >= 70) { color = '#3b82f6'; verdict = '👍 Хорошо'; }
+      else if (total >= 50) { color = '#f59e0b'; verdict = '⚠️ Требует улучшений'; }
+      else { color = '#ef4444'; verdict = '🚨 Нужна работа'; }
+
+      // Table rows
+      let rows = '';
+      (dialog.items || []).forEach(item => {
+        const checkItem = CHECKLIST.find(c => c.id === item.id);
+        if (!checkItem) return;
+        let tagClass = 'tag-no', tagText = 'Нет';
+        if (item.result === 'да') { tagClass = 'tag-yes'; tagText = 'Да'; }
+        else if (item.result === 'частично') { tagClass = 'tag-partial'; tagText = 'Частично'; }
+        else if (item.result === 'н/а') { tagClass = 'tag-partial'; tagText = 'Н/А'; }
+        rows += `<tr>
+          <td style="color:var(--muted); font-weight:700">${item.id}</td>
+          <td>${checkItem.text}</td>
+          <td style="text-align:center; color:var(--muted)">${checkItem.score}</td>
+          <td style="text-align:center"><span class="tag ${tagClass}">${tagText} · ${item.score_given}</span></td>
+          <td style="color:var(--muted); font-size:12px">${item.comment || ''}</td>
+        </tr>`;
+      });
+
+      // Analysis
+      const a = dialog.analysis || {};
+      const analysisItems = [
+        { label: '❌ Пропущенные действия', value: a.missed },
+        { label: '🔀 Перепутаны местами', value: a.wrong_order },
+        { label: '⚠️ Ошибки менеджера', value: a.mistakes },
+        { label: '✅ Успешные действия', value: a.successes },
+        { label: '🗣️ Грамотность и манеры речи', value: a.speech },
+        { label: '🎯 Управление разговором', value: a.managed_conversation },
+        { label: '💡 Рекомендации ОКК', value: a.recommendations },
+      ];
+      const analysisHtml = analysisItems.filter(i => i.value).map(i =>
+        `<div class="analysis-item"><strong>${i.label}:</strong><br>${i.value}</div>`
+      ).join('');
+
+      html += `
+        <div style="border:2px solid var(--border); border-radius:14px; padding:24px; margin-bottom:28px;">
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; flex-wrap:wrap;">
+            <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,${color},${color}cc); display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-weight:800; font-size:22px; box-shadow:0 4px 16px rgba(0,0,0,0.15);">
+              ${total}<span style="font-size:10px; opacity:0.85;">из 100</span>
+            </div>
+            <div>
+              <div style="font-size:15px; font-weight:800; color:var(--primary);">Клиент ${data.dialogs.length > 1 ? idx + 1 : ''}</div>
+              <div style="font-size:13px; color:var(--muted); margin-top:2px;">${dialog.client_description || ''}</div>
+              <div style="font-size:13px; font-weight:700; color:${color}; margin-top:4px;">${verdict}</div>
+            </div>
+          </div>
+          <table class="checklist-table" style="margin-bottom:16px;">
+            <thead><tr><th>#</th><th>Критерий</th><th>Балл</th><th>Факт</th><th>Комментарий</th></tr></thead>
+            <tbody>${rows}</tbody>
+            <tfoot><tr>
+              <td colspan="2" style="font-weight:800; color:var(--primary); padding:12px 14px;">ИТОГО</td>
+              <td style="font-weight:800; color:var(--primary);">100</td>
+              <td style="font-weight:800; color:var(--primary);">${total}</td>
+              <td></td>
+            </tr></tfoot>
+          </table>
+          <div class="analysis-section">
+            <h3>Анализ: ${managerName}</h3>
+            ${analysisHtml}
+          </div>
+        </div>`;
+    });
+
+    document.getElementById('analysisSection').innerHTML = html;
+    evalCard.style.display = 'block';
+    evalCard.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function saveEval() {
+    if (!currentEvalData) return;
+    const managerName = document.getElementById('managerName').value || 'Менеджер';
+    const date = new Date().toLocaleDateString('ru-RU');
+    let text = `ОТДЕЛ КОНТРОЛЯ КАЧЕСТВА — SVET.KZ\n`;
+    text += `ФИО менеджера: ${managerName}\n`;
+    text += `Дата проверки: ${date}\n\n`;
+    text += `КРАТКОЕ СОДЕРЖАНИЕ ЗАПИСИ:\n${currentEvalData.summary || '—'}\n\n`;
+
+    if (!currentEvalData.has_clients || !currentEvalData.dialogs?.length) {
+      text += `Клиентов в записи не обнаружено.\n`;
+    } else {
+      currentEvalData.dialogs.forEach((dialog, idx) => {
+        text += `═══════════════════════════════════\n`;
+        text += `КЛИЕНТ ${currentEvalData.dialogs.length > 1 ? idx + 1 : ''}: ${dialog.client_description || ''}\n`;
+        text += `Итоговый балл: ${dialog.total} / 100\n`;
+        text += `─────────────────────────────────\nЧЕК-ЛИСТ\n─────────────────────────────────\n`;
+        (dialog.items || []).forEach(item => {
+          const c = CHECKLIST.find(x => x.id === item.id);
+          if (c) text += `${item.id}. ${c.text} — ${item.result} (${item.score_given}/${c.score})\n   ${item.comment || ''}\n`;
+        });
+        const a = dialog.analysis || {};
+        text += `\n─────────────────────────────────\nАНАЛИЗ\n─────────────────────────────────\n`;
+        if (a.missed) text += `Пропущенные действия:\n${a.missed}\n\n`;
+        if (a.mistakes) text += `Ошибки:\n${a.mistakes}\n\n`;
+        if (a.successes) text += `Успехи:\n${a.successes}\n\n`;
+        if (a.speech) text += `Грамотность:\n${a.speech}\n\n`;
+        if (a.recommendations) text += `Рекомендации:\n${a.recommendations}\n\n`;
+      });
+    }
+
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a2 = document.createElement('a');
+    a2.href = url;
+    a2.download = `ОКК_${managerName}_${date.replace(/\./g, '-')}.txt`;
+    a2.click();
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>
